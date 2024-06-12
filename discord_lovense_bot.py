@@ -29,6 +29,23 @@ CALLBACK_PORT = 8000
 logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] - %(message)s', level=logging.INFO, filename='ToyBot.log')
 log = logging.getLogger('ToyBot')
 
+class Callbacks:
+    async def webserver(self):
+        app = web.Application()
+        app.router.add_post('/callback', self.handle_callback)
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, 'localhost', CALLBACK_PORT)
+        await site.start()
+        log.info(f"Callback server started on port {CALLBACK_PORT}")
+        
+    async def handle_callback(self, request):
+        data = await request.json()
+        log.info(f"Received callback: {data}")
+        # Process the callback data as needed
+        return web.Response(text="Callback received")
+
+callbacks = Callbacks()
 
 @bot.hybrid_command()
 async def ping(ctx):
