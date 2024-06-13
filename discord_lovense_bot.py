@@ -7,22 +7,14 @@ import requests
 from aiohttp import web
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Fetching environment variables
-GUILD_IDS = [int(x) for x in os.getenv('GUILD_IDS', '').split(',') if x]
-LOVENSE_DEVELOPER_TOKEN = os.getenv('LOVENSE_DEVELOPER_TOKEN')
-TOKEN = os.getenv('TOKEN')
-
-# Check if TOKEN is None and raise an error if it is
-if TOKEN is None:
-    raise ValueError("No TOKEN found in environment variables")
+# Directly set the token here
+TOKEN = "MTI1MDkyNDU0Mjk4NjI5MzMwOQ.GVPVLk.OJEsCH_Aa71Was5X2ScU6SSIR8CUNiPzPj3jtY"
+GUILD_IDS = []  # Add your guild IDs here if necessary
+LOVENSE_DEVELOPER_TOKEN = "your_lovense_developer_token_here"  # Add your Lovense developer token
 
 REQUEST_HEADERS = {
     'User-Agent': 'ToyBot/beep-boop'
@@ -227,38 +219,29 @@ class ToyController:
         self._refresh()
         if guild_id not in self.guilds:
             return False
-        if uid is not None and uid not in this.guilds.get(guild_id):
+        if uid is not None and uid not in self.guilds.get(guild_id):
             return False
-        if strength > 0:
-            action += ':{}'.format(strength)
         uids = [x.get('uid') for x in (self.guilds.get(guild_id).values() if uid is None else [self.guilds.get(guild_id).get(uid)])]
         req = {**self.BASE_REQ, **{
             'uid': ','.join(uids),
-            'command': 'Function',
-            'action': action,
-            'timeSec': duration,
+            'command': action,
+            'strength': str(strength),
+            'timeSec': str(duration),
         }}
         with requests.post(API_URL_COMMAND, json=req, timeout=5) as response:
             return response.status_code == 200
 
     def _refresh(self):
         now = round(time.time())
-        old = {**self.guilds}
-        for guild_id, guild in old.items():
-            for uid, user in guild.items():
-                if now - user.get('last_updated', now) > 7200:
+        for guild_id, users in self.guilds.items():
+            for uid, user in list(users.items()):
+                if now - user['last_updated'] > 3600:  # 1 hour
                     del self.guilds[guild_id][uid]
-            if not self.guilds.get(guild_id):
-                del self.guilds[guild_id]
-        if old != self.guilds:
-            log.info("Purged guild data")
-            self._save()
+        self._save()
 
     def _save(self):
         with open('guilds.json', 'w') as f:
             f.write(json.dumps(self.guilds))
 
-
 controller = ToyController()
-
 bot.run(TOKEN)
