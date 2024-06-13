@@ -15,10 +15,15 @@ load_dotenv()
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+# Fetching environment variables
 GUILD_IDS = [int(x) for x in os.getenv('GUILD_IDS', '').split(',') if x]
-
 LOVENSE_DEVELOPER_TOKEN = os.getenv('LOVENSE_DEVELOPER_TOKEN')
 TOKEN = os.getenv('TOKEN')
+
+# Check if TOKEN is None and raise an error if it is
+if TOKEN is None:
+    raise ValueError("No TOKEN found in environment variables")
+
 REQUEST_HEADERS = {
     'User-Agent': 'ToyBot/beep-boop'
 }
@@ -222,7 +227,7 @@ class ToyController:
         self._refresh()
         if guild_id not in self.guilds:
             return False
-        if uid is not None and uid not in self.guilds.get(guild_id):
+        if uid is not None and uid not in this.guilds.get(guild_id):
             return False
         if strength > 0:
             action += ':{}'.format(strength)
